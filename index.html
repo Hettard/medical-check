@@ -3,238 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الأعذار الطبية المعتمد</title>
-    
+    <title>نظام التقارير الطبية الذكي</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
     <style>
-        :root {
-            --primary-blue: #003366;
-            --dark-gray: #333333;
-            --light-bg: #f8f9fa;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--light-bg);
-            margin: 0;
-            padding: 20px;
-            color: var(--dark-gray);
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        }
-
-        /* تنسيق النموذج */
-        .form-section h2 { color: var(--primary-blue); text-align: center; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 16px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: 0.3s;
-            margin-top: 10px;
-        }
-        .btn-generate { background-color: var(--primary-blue); color: white; }
-        .btn-search { background-color: #f1f1f1; color: #333; border: 1px solid #ccc; }
-        .btn-generate:hover { background-color: #002244; }
-
-        /* تنسيق ورقة العذر (مثل الصور) */
-        #excusePaper {
-            display: none;
-            border: 1px solid #000;
-            padding: 40px;
-            background: #fff;
-            position: relative;
-        }
-
-        .excuse-header {
-            display: flex;
-            justify-content: space-between;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-        }
-
-        .info-row { font-size: 19px; margin-bottom: 15px; line-height: 1.6; }
-        .info-row strong { color: var(--primary-blue); }
-
-        #qrcode {
-            display: flex;
-            justify-content: center;
-            margin: 30px 0;
-        }
-
-        .ref-box {
-            text-align: center;
-            font-weight: bold;
-            font-size: 18px;
-            color: #d93025;
-            border: 1px dashed #d93025;
-            padding: 8px;
-            display: inline-block;
-        }
-
-        .footer-sig {
-            margin-top: 50px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .no-print { margin-top: 20px; }
-
+        :root { --blue: #003366; --red: #d93025; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; direction: rtl; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .no-print { text-align: right; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .btn-main { background: var(--blue); color: white; }
+        .btn-copy { background: #28a745; color: white; display: none; }
+        
+        /* تصميم التقرير الطبي */
+        #excusePaper { display: none; border: 1px solid #000; padding: 40px; background: white; margin-top: 20px; position: relative; }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .info { font-size: 19px; line-height: 2; }
+        #qrcode { display: flex; justify-content: center; margin: 25px 0; }
+        .ref-code { text-align: center; border: 1px dashed var(--red); color: var(--red); padding: 10px; font-weight: bold; width: fit-content; margin: auto; display: block; }
+        
         @media print {
-            .no-print, .form-section { display: none !important; }
-            body { background: white; padding: 0; }
+            .no-print { display: none !important; }
+            body { padding: 0; background: white; }
             #excusePaper { display: block !important; border: none; width: 100%; }
-            .container { box-shadow: none; max-width: 100%; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="setupForm" class="form-section">
-        <h2>🏥 نظام إصدار الأعذار الطبية</h2>
-        <div class="input-group">
-            <label>اسم المريض الكامل:</label>
-            <input type="text" id="stuName" placeholder="أدخل الاسم">
-        </div>
-        <div class="input-group">
-            <label>رقم السجل / الهوية:</label>
-            <input type="text" id="stuId" placeholder="أدخل الرقم">
-        </div>
-        <div class="input-group">
-            <label>التشخيص:</label>
-            <select id="stuReason">
-                <option value="إنفلونزا حادة وحمى">إنفلونزا حادة وحمى</option>
-                <option value="إصابة عضلية تستدعي الراحة">إصابة عضلية تستدعي الراحة</option>
-                <option value="مراجعة طبية طارئة">مراجعة طبية طارئة</option>
-            </select>
-        </div>
-        <button class="btn btn-generate" onclick="generateExcuse()">إصدار العذر الطبي</button>
-        
-        <hr style="margin: 30px 0;">
-        
-        <div class="input-group">
-            <label>لديك رمز سابق؟ استعلم هنا:</label>
-            <input type="text" id="searchCode" placeholder="مثلاً: MED-1234">
-        </div>
-        <button class="btn btn-search" onclick="lookupExcuse()">التحقق من العذر</button>
+    <div id="setupForm" class="no-print">
+        <h2 style="text-align: center; color: var(--blue);">🏥 إصدار تقرير طبي مباشر</h2>
+        <label>اسم المريض الكامل:</label>
+        <input type="text" id="stuName" placeholder="أدخل الاسم">
+        <label>رقم السجل / الهوية:</label>
+        <input type="text" id="stuId" placeholder="أدخل الرقم">
+        <label>التشخيص الطبي:</label>
+        <select id="stuReason">
+            <option value="إنفلونزا حادة وحمى">إنفلونزا حادة وحمى</option>
+            <option value="إصابة عضلية تستدعي الراحة">إصابة عضلية تستدعي الراحة</option>
+            <option value="نزلة معوية حادة">نزلة معوية حادة</option>
+        </select>
+        <button class="btn btn-main" onclick="generateLink()">إصدار العذر وتوليد الرابط</button>
+        <button id="copyBtn" class="btn btn-copy" onclick="copyToClipboard()">نسخ رابط العذر للمشاركة 🔗</button>
     </div>
 
     <div id="excusePaper">
-        <div class="excuse-header">
-            <div style="text-align: right;">
-                <strong>وزارة الصحة / المركز الجامعي</strong><br>
-                <span>قسم التقارير الطبية</span>
-            </div>
-            <div id="outDate" style="text-align: left;">التاريخ: </div>
+        <div class="header">
+            <div style="text-align: right;"><strong>وزارة الصحة / المركز الجامعي</strong><br>قسم التقارير الطبية</div>
+            <div id="outDate">التاريخ: </div>
         </div>
-
-        <div class="info-row">نفيدكم بأن المريض/ة: <strong id="resName"></strong></div>
-        <div class="info-row">رقم السجل: <strong id="resId"></strong></div>
-        <div class="info-row">كان تحت إشرافنا الطبي وتبين إصابته بـ: <strong id="resReason"></strong></div>
-        <div class="info-row">وعليه منح هذا العذر الطبي لمدة <strong>(3 أيام)</strong> تبدأ من تاريخه.</div>
-
+        <div class="info">
+            نفيدكم بأن المريض/ة: <strong id="resName"></strong><br>
+            رقم السجل: <strong id="resId"></strong><br>
+            كان تحت إشرافنا الطبي وتبين إصابته بـ: <strong id="resReason"></strong><br>
+            وعليه منح هذا العذر الطبي لمدة <strong>(3 أيام)</strong> تبدأ من تاريخه.
+        </div>
         <div id="qrcode"></div>
-        <p style="text-align: center; font-size: 13px;">(مسح الباركود للتحقق من صحة البيانات أعلاه)</p>
-
-        <center>
-            <div class="ref-box">الرمز المرجعي: <span id="resCode"></span></div>
-        </center>
-
-        <div class="footer-sig">
-            <div>ختم المنشأة:<br>..............</div>
-            <div>توقيع الطبيب:<br>..............</div>
-        </div>
-
-        <div class="no-print">
-            <button class="btn btn-generate" onclick="window.print()">طباعة التقرير 🖨️</button>
-            <button class="btn btn-search" onclick="location.reload()">إصدار عذر جديد</button>
+        <div class="ref-code">الرمز المرجعي: <span id="resCode"></span></div>
+        <div class="no-print" style="margin-top: 30px; text-align: center;">
+            <button class="btn btn-main" style="width: 200px;" onclick="window.print()">طباعة التقرير</button>
+            <button class="btn" style="width: 200px; background: #eee;" onclick="location.href=window.location.pathname">إصدار جديد</button>
         </div>
     </div>
 </div>
 
 <script>
-    // استخدام الذاكرة المحلية لحفظ البيانات
-    let medicalDB = JSON.parse(localStorage.getItem('medicalDB')) || {};
+    // وظيفة عند تحميل الصفحة للتحقق من وجود بيانات في الرابط
+    window.onload = function() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('n')) {
+            const data = {
+                name: atob(params.get('n')), // فك تشفير الاسم
+                id: atob(params.get('i')),
+                reason: atob(params.get('r')),
+                date: atob(params.get('d')),
+                code: params.get('c')
+            };
+            showUI(data);
+        }
+    };
 
-    function generateExcuse() {
-        const name = document.getElementById('stuName').value.trim();
-        const id = document.getElementById('stuId').value.trim();
+    function generateLink() {
+        const name = document.getElementById('stuName').value;
+        const id = document.getElementById('stuId').value;
         const reason = document.getElementById('stuReason').value;
-
-        if (!name || !id) {
-            alert("يرجى تعبئة كافة الحقول");
-            return;
-        }
-
-        const code = "MED-" + Math.floor(1000 + Math.random() * 9000);
         const date = new Date().toLocaleDateString('ar-SA');
+        const code = "MED-" + Math.floor(1000 + Math.random() * 9000);
 
-        // حفظ
-        medicalDB[code] = { name, id, reason, date };
-        localStorage.setItem('medicalDB', JSON.stringify(medicalDB));
+        if(!name || !id) return alert("أكمل البيانات");
 
-        alert("تم إنشاء العذر بنجاح! الرمز: " + code);
-        displayExcuse(code);
+        // تشفير البيانات لوضعها في الرابط
+        const query = `?n=${btoa(unescape(encodeURIComponent(name)))}&i=${btoa(id)}&r=${btoa(unescape(encodeURIComponent(reason)))}&d=${btoa(date)}&c=${code}`;
+        const finalLink = window.location.origin + window.location.pathname + query;
+
+        // تحديث الواجهة
+        document.getElementById('copyBtn').style.display = 'block';
+        window.history.pushState({}, '', query); // تغيير الرابط بدون تحديث
+        showUI({name, id, reason, date, code});
+        alert("تم توليد العذر! يمكنك الآن نسخ الرابط من الزر الأخضر ومشاركته.");
     }
 
-    function lookupExcuse() {
-        const code = document.getElementById('searchCode').value.trim().toUpperCase();
-        if (medicalDB[code]) {
-            displayExcuse(code);
-        } else {
-            alert("الرمز غير موجود في النظام!");
-        }
-    }
-
-    function displayExcuse(code) {
-        const data = medicalDB[code];
+    function showUI(data) {
         document.getElementById('setupForm').style.display = 'none';
         document.getElementById('excusePaper').style.display = 'block';
-
         document.getElementById('resName').innerText = data.name;
         document.getElementById('resId').innerText = data.id;
         document.getElementById('resReason').innerText = data.reason;
-        document.getElementById('resCode').innerText = code;
+        document.getElementById('resCode').innerText = data.code;
         document.getElementById('outDate').innerText = "التاريخ: " + data.date;
 
-        // توليد الباركود
-        const qrElement = document.getElementById("qrcode");
-        qrElement.innerHTML = ""; // مسح القديم
-        
-        new QRCode(qrElement, {
-            text: `الاسم: ${data.name}\nالهوية: ${data.id}\nالتشخيص: ${data.reason}\nالرمز: ${code}`,
-            width: 150,
-            height: 150,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
+        document.getElementById("qrcode").innerHTML = "";
+        new QRCode(document.getElementById("qrcode"), {
+            text: window.location.href, // الباركود يحتوي على رابط التحقق المباشر
+            width: 150, height: 150
         });
     }
-</script>
 
+    function copyToClipboard() {
+        navigator.clipboard.writeText(window.location.href);
+        alert("تم نسخ الرابط! أرسله لأي شخص وسيرى العذر فوراً.");
+    }
+</script>
 </body>
 </html>
